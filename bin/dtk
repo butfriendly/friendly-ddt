@@ -1,0 +1,247 @@
+#/usr/bin/env bash
+
+# See:
+# http://docbook.sourceforge.net/release/xsl/current/doc/html/
+
+# ./dtk.sh convert docbook.xml xhtml-1_1/chunk.xsl api-manual
+# ./dtk.sh merge dcobook.xml
+
+DOC_LANG=en
+DOCBOOK_XSL_HOME="./xsl/docbook-xsl"
+XSLTPROC_EXTRA_FLAGS=
+
+E_BAD_ARGS=65
+E_FILE_EXISTS=66
+
+function about {
+cat <<EOF
+/// Docbook-Documentation-Toolkit v0.2.5b
+/// Copyright (C) 2008-2011 by C. Schmitz <csc@soulworks.de>
+
+EOF
+}
+
+# usage 
+function usage {
+	case "$1"
+	in
+		convert) convert_usage ;;
+		merge) merge_usage ;;
+		*) usage_common ;;
+	esac
+}
+
+function usage_common {
+cat <<EOF
+Usage: $0 <command> [options] </path/to/docbook.xml> <output>
+	
+This script converts the given docbook source to other format.
+Currently there is only support for XHTML and PDF output types.
+
+Commands:
+	convert	- Convert the document
+	merge	- Merge multipart documents
+	help	- Get some help
+
+For futher help on the commands type:
+	$0 help <command>
+	
+EOF
+}
+
+function convert_usage {
+cat <<EOF
+Usage: $0 convert [options] </path/to/docbook.xml> <output>
+
+Options:
+	-h	- For XHTML output
+	-p	- For PDF output
+		
+Examples:
+	$0 -h src/manual.xml myManual
+	
+	This creates the directory build/myManual and stored
+	the XHTML docs there.
+		
+	or
+		
+	$0 -p src/manual.xml myManual
+	
+	This creates an PDF file located at build/myManual.pdf
+
+EOF
+}
+
+function merge_usage {
+cat <<EOF
+Usage: $0 merge [options] </path/to/docbook.xml> <output>
+
+Options:
+	none
+		
+Examples:
+	$0 src/manual.xml myMergedManual
+		
+EOF
+}
+
+function check_toolchain {
+	for i in $TOOLCHAIN; do
+		command -v $1 &>/dev/null
+		if [[ $? -eq 1 ]]; then
+			printf "ERROR: Command %s not found. Aborted.\n" $i
+			exit 1
+		fi
+	done
+}
+
+function convert_command {
+	local TOOLCHAIN="xsltproc fop"
+	local html=0
+	local pdf=0
+	local free=0
+	local draft=0
+	
+	local args=`getopt hpf:d $*`
+	set -- $args
+
+	while true; do
+		case "$1"
+		in
+			-h) html=1; shift;;
+			-p) pdf=1; shift;;
+			-f) free=1;shift;;
+			-d) draft=1; shift;;
+			--) shift; break ;;
+			*) echo "Error!"; exit 1 ;;
+		esac
+	done
+	
+	check_toolchain $TOOLCHAIN
+	
+	local XSLTPROC="`which xsltproc` --xinclude --novalid ${XSLTPROC_EXTRA_FLAGS}"
+	local FOP="java org.apache.fop.cli.Main"
+	
+	if [[ $# -ne 2 ]]; then
+		echo "Invalid parameter count. Abort."
+		exit E_BAD_ARGS
+	fi
+
+	local SRC=$1
+	local DST="build/$2"
+	
+	if [[ ! -f "$SRC" ]]; then
+		printf "Source file %s could not be found.\n" $SRC
+		exit E_FILE_EXISTS
+	fi
+
+	local LOGFILE="${DST}.log"
+
+	local XSLT_SRC="${SRC}"
+	local XSLT_DST=
+	local XSLT_XSL=
+	
+	if [[ $pdf -eq 1 ]]; then
+		XSLT_DST="${DST}.fo.xml"
+		XSLT_XSL="xsl/custom.fo.xsl"
+	fi
+	
+	if [[ $html -eq 1 ]]; then
+		XSLT_DST="${DST}/index.html"
+		XSLT_XSL="xsl/custom.xsl"
+	fi
+	
+	printf "Start transformation of %s to %s\n" $XSLT_SRC $XSLT_DST
+	${XSLTPROC} --noout --output "$XSLT_DST" "$XSLT_XSL" "$XSLT_SRC" &> "${LOGFILE}"
+	if [[ $? -ne 0 ]]; then
+		printf "Error."
+		cat "${LOGFILE}"
+		return 1
+	fi
+
+	if [[ $pdf -eq 1 ]]; then
+		local FOP_SRC="${XSLT_DST}"
+		local FOP_DST="${DST}.pdf"
+		local FOP_CFG="cfg/fop.cfg"
+		local FOP_PARAMS=
+		
+		printf "Start transformation of %s to %s\n" $FOP_SRC $FOP_DST
+		${FOP} ${FOP_PARAMS} -c "$FOP_CFG" -fo "$FOP_SRC" -pdf "$FOP_DST" &> "${LOGFILE}"
+		if [[ $? -ne 0 ]]; then
+			printf "Error 2."
+			cat "${LOGFILE}"
+			return 1
+		fi
+	fi
+	
+	echo "All transformations finished"
+}
+
+function merge_command {
+	local TOOLCHAIN="xmllint"
+	
+	local args=`getopt hp $*`
+	set -- $args
+
+	while true; do
+		case "$1"
+		in
+			--) shift; break ;;
+			*) echo "Error!"; exit 1 ;;
+		esac
+	done
+
+	check_toolchain $TOOLCHAIN
+	
+	local XMLLINT="`which xmllint` --xinclude"
+	
+	if [[ $# -ne 2 ]]; then
+		echo "Invalid parameter count. Abort."
+		exit E_BAD_ARGS
+	fi
+	
+	SRC=$1
+	DST="build/$2"
+	
+	if [[ ! -f "$SRC" ]]; then
+		printf "Source file %s could not be found.\n" $SRC
+		exit E_FILE_EXISTS
+	fi
+	
+	if [[ -f "$DST" ]]; then
+		printf "Dest file %s already exists.\n" $DST
+
+		echo "Should it be overwritten? (y/n)"
+		read confirm
+		if [ $confirm != "y" ]; then
+			echo "Aborted."
+			exit E_FILE_EXISTS
+		fi
+	fi
+
+	printf "Merging %s to %s\n" $SRC $DST
+	xmllint --xinclude "${SRC}" > "${DST}"
+}
+
+function die {
+    echo "${PROGNAME}: $*"
+    exit 1
+}
+
+function warn {
+    echo "${PROGNAME}: $*"
+}
+
+
+COMMAND=$1
+shift
+about
+
+case "$COMMAND"
+in
+	convert) convert_command $*;;
+	merge) merge_command $*;;
+	*) usage $1; shift;;
+esac
+
+exit 0

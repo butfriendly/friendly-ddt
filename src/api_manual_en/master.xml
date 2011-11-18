@@ -1,0 +1,497 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<article version="5.0" xmlns="http://docbook.org/ns/docbook"
+         xmlns:xlink="http://www.w3.org/1999/xlink"
+         xmlns:xi="http://www.w3.org/2001/XInclude"
+         xmlns:svg="http://www.w3.org/2000/svg"
+         xmlns:mml="http://www.w3.org/1998/Math/MathML"
+         xmlns:html="http://www.w3.org/1999/xhtml"
+         xmlns:db="http://docbook.org/ns/docbook">
+  <info>
+    <title>API manual</title>
+
+    <subtitle>API manual for developers</subtitle>
+
+    <titleabbrev>API</titleabbrev>
+
+    <authorgroup>
+      <author>
+        <personname><firstname>Jon</firstname><surname>Doe</surname></personname>
+
+        <affiliation>
+          <jobtitle>Boss</jobtitle>
+
+          <orgname class="corporation">Example Corp</orgname>
+        </affiliation>
+      </author>
+    </authorgroup>
+
+    <pubdate>2009</pubdate>
+  </info>
+
+  <section>
+    <title>Introduction</title>
+
+    <para></para>
+
+    <section>
+      <title>Notation and Conventions</title>
+
+      <para>The key words “MUST”, “MUST NOT”, “REQUIRED”, “SHALL”, “SHALL
+      NOT”, “SHOULD”, “SHOULD NOT”, “RECOMMENDED”, “MAY”, and “OPTIONAL” in
+      this document are to be interpreted as described in <xref
+      endterm="bib.RFC2119.abbrev" linkend="bib.RFC2119" />. Domain name
+      examples use <xref endterm="bib.RFC2606.abbrev"
+      linkend="bib.RFC2606" />.</para>
+    </section>
+
+    <section>
+      <title>Definitions</title>
+
+      <para></para>
+    </section>
+
+    <section>
+      <title>Requests</title>
+
+      <para>The URLs MUST include scheme, authority, and path, and MAY include
+      query and fragment as defined by <xref endterm="bib.RFC3986.abbrev"
+      linkend="bib.RFC3986" /> section 3.</para>
+    </section>
+
+    <section>
+      <title>Parameters</title>
+
+      <para>Parameter names and values are case sensitive. Each parameter MUST
+      NOT appear more than once per request and are REQUIRED unless otherwise
+      noted.</para>
+
+      <programlisting>unreserved = ALPHA, DIGIT, '-', '.', '_', '~'</programlisting>
+
+      <section>
+        <title>Parameter Encoding</title>
+
+        <para>All parameter names and values are escaped using the
+        percent-encoding (%xx) mechanism described in <xref
+        endterm="bib.RFC3986.abbrev" linkend="bib.RFC3986" /> section 2.1.
+        Characters not mentioned in the unreserved character set (<xref
+        endterm="bib.RFC3986.abbrev" linkend="bib.RFC3986" /> section 2.3)
+        MUST be encoded, otherwise they MUST NOT be encoded. Hexadecimal
+        characters in encodings must be upper case. Text names and values MUST
+        be encoded as UTF-8 octets before percent-encoding them per <xref
+        endterm="bib.RFC3629.abbrev" linkend="bib.RFC3629" />.</para>
+      </section>
+    </section>
+
+    <section>
+      <title>Response</title>
+
+      <para>The response is wrapped by a root-tag which provides the current
+      API version.</para>
+
+      <example>
+        <title>Example response</title>
+
+        <programlisting>&lt;api version="1.0"&gt;
+  &lt;!-- response body --&gt;
+&lt;/api&gt;
+</programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title>Date and Time</title>
+
+      <para>Unless otherwise specified timestamps are expressed in the format
+      2004-02-12T15:19:21+00:00 as described in <xref
+      endterm="bib.RFC3339.abbrev" linkend="bib.RFC3339" />.</para>
+    </section>
+
+    <section>
+      <title>Authentication</title>
+
+      <para>You are REQUIRED to obtain a token before you can access any API
+      methods.</para>
+
+      <screen>https://example.com/api?username=foo</screen>
+
+      <para>For further details have a look at XXX.</para>
+    </section>
+  </section>
+
+  <section>
+    <title>Methods</title>
+
+    <para>The API endpoint for the offered methods is
+    https://example.com/api.</para>
+
+    <section role="methodSpec" xml:id="method.items.search">
+      <title><command>/foo/bar</command></title>
+
+      <section>
+        <title>HTTP-Method(s):</title>
+
+        <variablelist>
+          <varlistentry>
+            <term>GET</term>
+
+            <listitem>
+              <para>Executes an case-insensitive search for items whose title,
+              description or tags match the given
+              <parameter>term</parameter>.</para>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term>HEAD</term>
+
+            <listitem>
+              <para>Determines the number of results to expect at an
+              GET-request to this method.</para>
+            </listitem>
+          </varlistentry>
+        </variablelist>
+      </section>
+
+      <section>
+        <title>Parameters</title>
+
+        <variablelist>
+          <varlistentry>
+            <term><parameter>mode</parameter></term>
+
+            <listitem>
+              <para>Defines the search mode the API should make use of.</para>
+
+              <variablelist>
+                <varlistentry>
+                  <term><parameter>and</parameter> (default)</term>
+
+                  <listitem>
+                    <para>Performs a conjunction on the tokens of the given
+                    term.</para>
+                  </listitem>
+                </varlistentry>
+
+                <varlistentry>
+                  <term><parameter>or</parameter></term>
+
+                  <listitem>
+                    <para>Performs a disjunction on the tokens of the given
+                    term.</para>
+                  </listitem>
+                </varlistentry>
+
+                <varlistentry>
+                  <term><parameter>phrase</parameter></term>
+
+                  <listitem>
+                    <para>Find a exact match of the given term.</para>
+                  </listitem>
+                </varlistentry>
+              </variablelist>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><parameter>page</parameter></term>
+
+            <listitem>
+              <para>The number of the page at the result which you want to
+              request</para>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><parameter>perPage</parameter></term>
+
+            <listitem>
+              <para>The number of results per page. You MAY request from one
+              to 50 results per page. The default value is 10.</para>
+            </listitem>
+          </varlistentry>
+        </variablelist>
+      </section>
+
+      <section>
+        <title>Examples</title>
+
+        <example>
+          <title>Search for items</title>
+
+          <programlisting>GET http://example.com/api/foo/bar</programlisting>
+
+          <screen>&lt;api version="1.0"&gt;
+&lt;/api&gt;</screen>
+        </example>
+      </section>
+
+      <section>
+        <title>Error codes</title>
+
+        <table>
+          <title>Error codes for /foo/bar</title>
+
+          <tgroup cols="2">
+            <thead>
+              <row>
+                <entry>Code</entry>
+
+                <entry>Description</entry>
+              </row>
+            </thead>
+
+            <tbody>
+              <row>
+                <entry>-</entry>
+
+                <entry>-</entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </table>
+      </section>
+    </section>
+  </section>
+
+  <bibliography>
+    <title>References</title>
+
+    <biblioentry id="bib.RFC2045">
+      <abbrev id="bib.RFC2045.abbrev">RFC2045</abbrev>
+
+      <editor>
+        <firstname>James</firstname>
+
+        <surname>Clark</surname>
+      </editor>
+
+      <authorgroup>
+        <author>
+          <personname>
+            <firstname />
+
+            <surname />
+          </personname>
+        </author>
+      </authorgroup>
+
+      <title>
+        <link xlink:href="http://tools.ietf.org/html/rfc2045">Multipurpose
+        Internet Mail Extensions (MIME) Part One: Format of Internet Message
+        Bodies</link>
+      </title>
+
+      <publishername>Network Working Group</publishername>
+
+      <pubdate>November 1996</pubdate>
+    </biblioentry>
+
+    <biblioentry id="bib.RFC2104">
+      <abbrev id="bib.RFC2104.abbrev">RFC2104</abbrev>
+
+      <authorgroup>
+        <author>
+          <personname>
+            <firstname />
+
+            <surname />
+          </personname>
+        </author>
+      </authorgroup>
+
+      <title>
+        <link xlink:href="http://tools.ietf.org/html/rfc2104">HMAC:
+        Keyed-Hashing for Message Authentication</link>
+      </title>
+
+      <publishername>Network Working Group</publishername>
+
+      <pubdate>February 1997</pubdate>
+    </biblioentry>
+
+    <biblioentry id="bib.RFC2119">
+      <abbrev id="bib.RFC2119.abbrev">RFC2119</abbrev>
+
+      <authorgroup>
+        <author>
+          <personname>
+            <firstname />
+
+            <surname />
+          </personname>
+        </author>
+      </authorgroup>
+
+      <title>
+        <link xlink:href="http://tools.ietf.org/html/rfc2119">Key words for
+        use in RFCs to Indicate Requirement Levels</link>
+      </title>
+
+      <publishername>Network Working Group</publishername>
+
+      <pubdate>March 1997</pubdate>
+    </biblioentry>
+
+    <biblioentry id="bib.RFC2606">
+      <abbrev id="bib.RFC2606.abbrev">RFC2606</abbrev>
+
+      <authorgroup>
+        <author>
+          <personname>
+            <firstname />
+
+            <surname />
+          </personname>
+        </author>
+      </authorgroup>
+
+      <title>
+        <link xlink:href="http://tools.ietf.org/html/rfc2606">Reserved Top
+        Level DNS Names</link>
+      </title>
+
+      <publishername>Network Working Group</publishername>
+
+      <pubdate>June 1999</pubdate>
+    </biblioentry>
+
+    <biblioentry id="bib.RFC2616">
+      <abbrev id="bib.RFC2616.abbrev">RFC2616</abbrev>
+
+      <authorgroup>
+        <author>
+          <personname>
+            <firstname />
+
+            <surname />
+          </personname>
+        </author>
+      </authorgroup>
+
+      <title>
+        <link xlink:href="http://tools.ietf.org/html/rfc2616">Hypertext
+        Transfer Protocol – HTTP/1.1</link>
+      </title>
+
+      <publishername>Network Working Group</publishername>
+
+      <pubdate>June 1999</pubdate>
+    </biblioentry>
+
+    <biblioentry id="bib.RFC2617">
+      <abbrev id="bib.RFC2617.abbrev">RFC2617</abbrev>
+
+      <authorgroup>
+        <author>
+          <personname>
+            <firstname />
+
+            <surname />
+          </personname>
+        </author>
+      </authorgroup>
+
+      <title>
+        <link xlink:href="http://tools.ietf.org/html/rfc2617">HTTP
+        Authentication: Basic and Digest Access Authentication</link>
+      </title>
+
+      <publishername>Network Working Group</publishername>
+
+      <pubdate>July 2002</pubdate>
+    </biblioentry>
+
+    <biblioentry id="bib.RFC3339">
+      <abbrev id="bib.RFC3339.abbrev">RFC3339</abbrev>
+
+      <authorgroup>
+        <author>
+          <personname>
+            <firstname />
+
+            <surname />
+          </personname>
+        </author>
+      </authorgroup>
+
+      <title>
+        <link xlink:href="http://www.ietf.org/rfc/rfc3339.txt">Date and Time
+        on the Internet: Timestamps</link>
+      </title>
+
+      <publishername>Network Working Group</publishername>
+
+      <pubdate>July 2002</pubdate>
+    </biblioentry>
+
+    <biblioentry id="bib.RFC3447">
+      <abbrev id="bib.RFC3447.abbrev">RFC3447</abbrev>
+
+      <authorgroup>
+        <author>
+          <personname>
+            <firstname />
+
+            <surname />
+          </personname>
+        </author>
+      </authorgroup>
+
+      <title>
+        <link xlink:href="http://tools.ietf.org/html/rfc3447">Public-Key
+        Cryptography Standards (PKCS) #1: RSA Cryptography; Specifications
+        Version 2.1</link>
+      </title>
+
+      <publishername>Network Working Group</publishername>
+
+      <pubdate>February 2003</pubdate>
+    </biblioentry>
+
+    <biblioentry id="bib.RFC3629">
+      <abbrev id="bib.RFC3629.abbrev">RFC3629</abbrev>
+
+      <authorgroup>
+        <author>
+          <personname>
+            <firstname />
+
+            <surname />
+          </personname>
+        </author>
+      </authorgroup>
+
+      <title>
+        <link xlink:href="http://tools.ietf.org/html/rfc3629">UTF-8, a
+        transformation format of Unicode and ISO 10646</link>
+      </title>
+
+      <publishername>Network Working Group</publishername>
+
+      <pubdate>November 2003</pubdate>
+    </biblioentry>
+
+    <biblioentry id="bib.RFC3986">
+      <abbrev id="bib.RFC3986.abbrev">RFC3986</abbrev>
+
+      <authorgroup>
+        <author>
+          <personname>
+            <firstname />
+
+            <surname />
+          </personname>
+        </author>
+      </authorgroup>
+
+      <title>
+        <link xlink:href="http://tools.ietf.org/html/rfc3986">Uniform Resource
+        Identifier (URI): Generic Syntax</link>
+      </title>
+
+      <publishername>Network Working Group</publishername>
+
+      <pubdate>January 2005</pubdate>
+    </biblioentry>
+  </bibliography>
+</article>
